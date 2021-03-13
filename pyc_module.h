@@ -3,6 +3,9 @@
 
 #include "pyc_code.h"
 #include <list>
+#include <string>
+
+using std::string;
 
 enum PycMagic {
     MAGIC_1_0 = 0x00999902,
@@ -43,6 +46,7 @@ public:
 
     int majorVer() const { return m_maj; }
     int minorVer() const { return m_min; }
+    string getVersionString() const;
 
     int verCompare(int maj, int min) const
     {

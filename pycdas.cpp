@@ -1,15 +1,16 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdarg>
+#include <filesystem>
+#include <iostream>
 #include "pyc_module.h"
 #include "pyc_numeric.h"
 #include "bytecode.h"
 
-#ifdef WIN32
-#  define PATHSEP '\\'
-#else
-#  define PATHSEP '/'
-#endif
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::filesystem::path;
 
 static const char* flag_names[] = {
     "CO_OPTIMIZED", "CO_NEWLOCALS", "CO_VARARGS", "CO_VARKEYWORDS",
@@ -232,25 +233,26 @@ void output_object(PycRef<PycObject> obj, PycModule* mod, int indent)
 int main(int argc, char* argv[])
 {
     if (argc < 2) {
-        fputs("No input file specified\n", stderr);
+        cerr << "No input file specified" << endl;
         return 1;
     }
-
+    path filepath{ argv[1] };
     PycModule mod;
     try {
-        mod.loadFromFile(argv[1]);
+        mod.loadFromFile(filepath.string().c_str());
     } catch (std::exception& ex) {
-        fprintf(stderr, "Error disassembling %s: %s\n", argv[1], ex.what());
+        cerr << "Error loading file " << filepath << ": " << ex.what() << endl;
         return 1;
     }
-    const char* dispname = strrchr(argv[1], PATHSEP);
-    dispname = (dispname == NULL) ? argv[1] : dispname + 1;
-    fprintf(pyc_output, "%s (Python %d.%d%s)\n", dispname, mod.majorVer(), mod.minorVer(),
-           (mod.majorVer() < 3 && mod.isUnicode()) ? " -U" : "");
+    if (!mod.isValid()) {
+        cerr << "Could not load file " << filepath << endl;
+        return 1;
+    }
+    cout << filepath.filename() << " (Python " << mod.getVersionString() << ")" << endl << endl;
     try {
         output_object(mod.code().cast<PycObject>(), &mod, 0);
     } catch (std::exception& ex) {
-        fprintf(stderr, "Error disassembling %s: %s\n", argv[1], ex.what());
+        cerr << "Error disassembling " << filepath << ": " << ex.what() << endl;
         return 1;
     }
 

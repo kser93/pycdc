@@ -1,6 +1,10 @@
 #include "pyc_module.h"
+#include "pyc_module.h"
 #include "data.h"
 #include <stdexcept>
+#include <sstream>
+
+using std::stringstream;
 
 void PycModule::setVersion(unsigned int magic)
 {
@@ -194,6 +198,16 @@ void PycModule::loadFromFile(const char* filename)
     }
 
     m_code = LoadObject(&in, this).require_cast<PycCode>();
+}
+
+string PycModule::getVersionString() const
+{
+    stringstream ss;
+    ss << this->majorVer() << '.' << this->minorVer();
+    if (this->majorVer() < 3 && this->isUnicode()) {
+        ss << " -U";
+    }
+    return ss.str();
 }
 
 PycRef<PycString> PycModule::getIntern(int ref) const
