@@ -19,11 +19,11 @@ int main(int argc, char* argv[])
     try {
         mod.loadFromFile(filepath.string().c_str());
     } catch (std::exception& ex) {
-        cerr << "Error loading file " << filepath << ": " << ex.what() << endl;
+        cerr << "Error loading file " << filepath.string() << ": " << ex.what() << endl;
         return 1;
     }
     if (!mod.isValid()) {
-        cerr << "Could not load file " << filepath << endl;
+        cerr << "Could not load file " << filepath.string() << endl;
         return 1;
     }
     cout << "# Source Generated with Decompyle++" << endl;
@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
     try {
         decompyle(mod.code(), &mod);
     } catch (std::exception& ex) {
-        cerr << "Error decompyling " << filepath << ": " << ex.what() << endl;
+        cerr << "Error decompyling " << filepath.string() << ": " << ex.what() << endl;
         return 1;
     }
 

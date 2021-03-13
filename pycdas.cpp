@@ -241,18 +241,18 @@ int main(int argc, char* argv[])
     try {
         mod.loadFromFile(filepath.string().c_str());
     } catch (std::exception& ex) {
-        cerr << "Error loading file " << filepath << ": " << ex.what() << endl;
+        cerr << "Error loading file " << filepath.string() << ": " << ex.what() << endl;
         return 1;
     }
     if (!mod.isValid()) {
-        cerr << "Could not load file " << filepath << endl;
+        cerr << "Could not load file " << filepath.string() << endl;
         return 1;
     }
     cout << filepath.filename() << " (Python " << mod.getVersionString() << ")" << endl << endl;
     try {
         output_object(mod.code().cast<PycObject>(), &mod, 0);
     } catch (std::exception& ex) {
-        cerr << "Error disassembling " << filepath << ": " << ex.what() << endl;
+        cerr << "Error disassembling " << filepath.string() << ": " << ex.what() << endl;
         return 1;
     }
 
