@@ -1,6 +1,7 @@
 #include "pyc_numeric.h"
 #include "pyc_module.h"
 #include "data.h"
+#include <cstdint>
 #include <cstring>
 
 #ifdef _MSC_VER
@@ -10,7 +11,7 @@
 /* PycInt */
 void PycInt::load(PycData* stream, PycModule*)
 {
-    m_value = stream->get32();
+    m_value = stream->get<std::int32_t>();
 }
 
 
@@ -18,18 +19,18 @@ void PycInt::load(PycData* stream, PycModule*)
 void PycLong::load(PycData* stream, PycModule*)
 {
     if (type() == TYPE_INT64) {
-        int lo = stream->get32();
-        int hi = stream->get32();
+        int lo = stream->get<std::int32_t>();
+        int hi = stream->get<std::int32_t>();
         m_value.push_back((lo      ) & 0xFFFF);
         m_value.push_back((lo >> 16) & 0xFFFF);
         m_value.push_back((hi      ) & 0xFFFF);
         m_value.push_back((hi >> 16) & 0xFFFF);
         m_size = (hi & 0x80000000) != 0 ? -4 : 4;
     } else {
-        m_size = stream->get32();
+        m_size = stream->get<std::int32_t>();
         int actualSize = m_size >= 0 ? m_size : -m_size;
         for (int i=0; i<actualSize; i++)
-            m_value.push_back(stream->get16());
+            m_value.push_back(stream->get<std::int16_t>());
     }
 }
 
@@ -96,7 +97,7 @@ std::string PycLong::repr() const
 /* PycFloat */
 void PycFloat::load(PycData* stream, PycModule*)
 {
-    int len = stream->getByte();
+    int len = stream->get<std::uint8_t>();
     if (len < 0)
         throw std::bad_alloc();
 
@@ -120,7 +121,7 @@ void PycComplex::load(PycData* stream, PycModule* mod)
 {
     PycFloat::load(stream, mod);
 
-    int len = stream->getByte();
+    int len = stream->get<std::uint8_t>();
     if (len < 0)
         throw std::bad_alloc();
 
@@ -142,7 +143,7 @@ bool PycComplex::isEqual(PycRef<PycObject> obj) const
 /* PycCFloat */
 void PycCFloat::load(PycData* stream, PycModule*)
 {
-    std::int64_t bits = stream->get64();
+    auto bits{ stream->get<std::int64_t>() };
     memcpy(&m_value, &bits, sizeof(bits));
 }
 
@@ -151,6 +152,6 @@ void PycCFloat::load(PycData* stream, PycModule*)
 void PycCComplex::load(PycData* stream, PycModule* mod)
 {
     PycCFloat::load(stream, mod);
-    std::int64_t bits = stream->get64();
+    auto bits{ stream->get<std::int64_t>() };
     memcpy(&m_imag, &bits, sizeof(bits));
 }

@@ -53,31 +53,30 @@ enum struct PycMagic: std::uint32_t {
 PycModule::PycModule(std::filesystem::path filepath) : m_maj(-1), m_min(-1), m_unicode(false)
 {
     PycData in(filepath);
-    //PycFile in(filepath);
-    if (!in.isOpen()) {
+    if (!in.good()) {
         std::ostringstream errmsg;
         errmsg << "Error opening file " << filepath;
         throw std::invalid_argument(errmsg.str());
     }
-    auto magic{ in.get32() };
+    auto magic{ in.get<std::int32_t>() };
     std::cout << std::hex << magic << std::endl;
     setVersion(magic);
 
     auto flags{ 0 };
     if (verCompare(3, 7) >= 0) {
-        flags = in.get32();
+        flags = in.get<std::int32_t>();
     }
 
     if (flags & 0x1) {
         // Optional checksum added in Python 3.7
-        in.get32();
-        in.get32();
+        in.get<std::int32_t>();
+        in.get<std::int32_t>();
     }
     else {
-        in.get32(); // Timestamp -- who cares?
+        in.get<std::int32_t>(); // Timestamp -- who cares?
 
         if (verCompare(3, 3) >= 0)
-            in.get32(); // Size parameter added in Python 3.3
+            in.get<std::int32_t>(); // Size parameter added in Python 3.3
     }
 
     m_code = LoadObject(&in, this).require_cast<PycCode>();

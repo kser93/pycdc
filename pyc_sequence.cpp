@@ -7,9 +7,9 @@
 void PycTuple::load(PycData* stream, PycModule* mod)
 {
     if (type() == TYPE_SMALL_TUPLE)
-        m_size = stream->getByte();
+        m_size = stream->get<std::uint8_t>();
     else
-        m_size = stream->get32();
+        m_size = stream->get<std::int32_t>();
 
     m_values.resize(m_size);
     for (int i=0; i<m_size; i++)
@@ -38,7 +38,7 @@ bool PycTuple::isEqual(PycRef<PycObject> obj) const
 /* PycList */
 void PycList::load(PycData* stream, PycModule* mod)
 {
-    m_size = stream->get32();
+    m_size = stream->get<std::int32_t>();
     for (int i=0; i<m_size; i++)
         m_values.push_back(LoadObject(stream, mod));
 }
@@ -146,7 +146,7 @@ PycRef<PycObject> PycDict::get(int idx) const
 /* PycSet */
 void PycSet::load(PycData* stream, PycModule* mod)
 {
-    m_size = stream->get32();
+    m_size = stream->get<std::int32_t>();
     for (int i=0; i<m_size; i++)
         m_values.insert(LoadObject(stream, mod));
 }

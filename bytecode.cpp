@@ -1,6 +1,7 @@
 #include "pyc_numeric.h"
 #include "bytecode.h"
 #include <cmath>
+#include <sstream>
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
@@ -306,10 +307,10 @@ void print_const(PycRef<PycObject> obj, PycModule* mod, const char* parent_f_str
 
 void bc_next(PycData& source, PycModule* mod, int& opcode, int& operand, int& pos)
 {
-    opcode = Pyc::ByteToOpcode(mod->majorVer(), mod->minorVer(), source.getByte());
+    opcode = Pyc::ByteToOpcode(mod->majorVer(), mod->minorVer(), source.get<std::uint8_t>());
     bool py36_opcode = (mod->majorVer() > 3 || (mod->majorVer() == 3 && mod->minorVer() >= 6));
     if (py36_opcode) {
-        operand = source.getByte();
+        operand = source.get<std::uint8_t>();
         pos += 2;
     } else {
         operand = 0;
@@ -318,18 +319,18 @@ void bc_next(PycData& source, PycModule* mod, int& opcode, int& operand, int& po
 
     if (opcode == Pyc::EXTENDED_ARG_A) {
         if (py36_opcode) {
-            opcode = Pyc::ByteToOpcode(mod->majorVer(), mod->minorVer(), source.getByte());
+            opcode = Pyc::ByteToOpcode(mod->majorVer(), mod->minorVer(), source.get<std::uint8_t>());
             operand <<= 8;
-            operand |= source.getByte();
+            operand |= source.get<std::uint8_t>();
             pos += 2;
         } else {
-            operand = source.get16() << 16;
-            opcode = Pyc::ByteToOpcode(mod->majorVer(), mod->minorVer(), source.getByte());
+            operand = source.get<std::int16_t>() << 16;
+            opcode = Pyc::ByteToOpcode(mod->majorVer(), mod->minorVer(), source.get<std::uint8_t>());
             pos += 3;
         }
     }
     if (!py36_opcode && (opcode >= Pyc::PYC_HAVE_ARG)) {
-        operand |= source.get16();
+        operand |= source.get<std::int16_t>();
         pos += 2;
     }
 }
@@ -343,11 +344,16 @@ void bc_disasm(PycRef<PycCode> code, PycModule* mod, int indent)
     static const size_t cmp_strings_len = sizeof(cmp_strings) / sizeof(cmp_strings[0]);
 
     PycData source(code->code()->value(), code->code()->length());
+    if (!source.good()) {
+        std::ostringstream errmsg;
+        errmsg << "Cannot init PycData length " << std::hex << code->code()->length();
+        throw std::runtime_error(errmsg.str());
+    }
 
     int opcode{ 0 };
     int operand{ 0 };
     int pos{ 0 };
-    while (!source.atEof()) {
+    while (!source.eof()) {
         for (int i=0; i<indent; i++)
             fputs("    ", pyc_output);
         fprintf(pyc_output, "%-7d ", pos);   // Current bytecode position

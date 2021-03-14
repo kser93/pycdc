@@ -70,11 +70,11 @@ PycRef<PycObject> CreateObject(int type)
 
 PycRef<PycObject> LoadObject(PycData* stream, PycModule* mod)
 {
-    int type = stream->getByte();
+    int type = stream->get<std::uint8_t>();
     PycRef<PycObject> obj;
 
     if (type == PycObject::TYPE_OBREF) {
-        int index = stream->get32();
+        int index = stream->get<std::int32_t>();
         obj = mod->getRef(index);
     } else {
         obj = CreateObject(type & 0x7F);

@@ -5,38 +5,38 @@
 void PycCode::load(PycData* stream, PycModule* mod)
 {
     if (mod->verCompare(1, 3) >= 0 && mod->verCompare(2, 3) < 0)
-        m_argCount = stream->get16();
+        m_argCount = stream->get<std::int16_t>();
     else if (mod->verCompare(2, 3) >= 0)
-        m_argCount = stream->get32();
+        m_argCount = stream->get<std::int32_t>();
 
     if (mod->verCompare(3, 8) >= 0)
-        m_posOnlyArgCount = stream->get32();
+        m_posOnlyArgCount = stream->get<std::int32_t>();
     else
         m_posOnlyArgCount = 0;
 
     if (mod->majorVer() >= 3)
-        m_kwOnlyArgCount = stream->get32();
+        m_kwOnlyArgCount = stream->get<std::int32_t>();
     else
         m_kwOnlyArgCount = 0;
 
     if (mod->verCompare(1, 3) >= 0 && mod->verCompare(2, 3) < 0)
-        m_numLocals = stream->get16();
+        m_numLocals = stream->get<std::int16_t>();
     else if (mod->verCompare(2, 3) >= 0)
-        m_numLocals = stream->get32();
+        m_numLocals = stream->get<std::int32_t>();
     else
         m_numLocals = 0;
 
     if (mod->verCompare(1, 5) >= 0 && mod->verCompare(2, 3) < 0)
-        m_stackSize = stream->get16();
+        m_stackSize = stream->get<std::int16_t>();
     else if (mod->verCompare(2, 3) >= 0)
-        m_stackSize = stream->get32();
+        m_stackSize = stream->get<std::int32_t>();
     else
         m_stackSize = 0;
 
     if (mod->verCompare(1, 3) >= 0 && mod->verCompare(2, 3) < 0)
-        m_flags = stream->get16();
+        m_flags = stream->get<std::int16_t>();
     else if (mod->verCompare(2, 3) >= 0)
-        m_flags = stream->get32();
+        m_flags = stream->get<std::int32_t>();
     else
         m_flags = 0;
 
@@ -63,9 +63,9 @@ void PycCode::load(PycData* stream, PycModule* mod)
     m_name = LoadObject(stream, mod).require_cast<PycString>();
 
     if (mod->verCompare(1, 5) >= 0 && mod->verCompare(2, 3) < 0)
-        m_firstLine = stream->get16();
+        m_firstLine = stream->get<std::int16_t>();
     else if (mod->verCompare(2, 3) >= 0)
-        m_firstLine = stream->get32();
+        m_firstLine = stream->get<std::int32_t>();
 
     if (mod->verCompare(1, 5) >= 0)
         m_lnTable = LoadObject(stream, mod).require_cast<PycString>();

@@ -47,7 +47,7 @@ static void ascii_to_utf8(std::string* data)
 void PycString::load(PycData* stream, PycModule* mod)
 {
     if (type() == TYPE_STRINGREF) {
-        PycRef<PycString> str = mod->getIntern(stream->get32());
+        PycRef<PycString> str = mod->getIntern(stream->get<std::int32_t>());
         m_value.resize(str->length());
 
         if (str->length())
@@ -55,9 +55,9 @@ void PycString::load(PycData* stream, PycModule* mod)
     } else {
         int length;
         if (type() == TYPE_SHORT_ASCII || type() == TYPE_SHORT_ASCII_INTERNED)
-            length = stream->getByte();
+            length = stream->get<std::uint8_t>();
         else
-            length = stream->get32();
+            length = stream->get<std::int32_t>();
 
         if (length < 0)
             throw std::bad_alloc();

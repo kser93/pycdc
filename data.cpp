@@ -6,11 +6,6 @@
 
 FILE* pyc_output = stdout;
 
-PycData::PycData(std::streambuf& sb)
-{
-    i_stm = std::make_unique<std::istream>(&sb);
-}
-
 PycData::PycData(const std::filesystem::path &filepath)
 {
     i_stm = std::make_unique<std::ifstream>(filepath, std::ios::in | std::ios::binary);
@@ -25,19 +20,18 @@ PycData::PycData(const void* buffer, int size)
     );
 }
 
-bool PycData::isOpen() const
+bool PycData::good() const
 {
     return i_stm->good();
 }
 
-bool PycData::atEof() const
+bool PycData::eof() const
 {
     i_stm->peek();
     return i_stm->eof();
 }
 
-template<typename T>
-T PycData::get()
+template<typename T> T PycData::get()
 {
     T x{ 0 };
     i_stm->read(reinterpret_cast<char*>(&x), sizeof(x));
@@ -52,26 +46,10 @@ T PycData::get()
     return x;
 }
 
-
-int PycData::getByte()
-{
-    return get<std::int8_t>() & 0xFF;
-}
-
-int PycData::get16()
-{
-    return get<std::int16_t>() & 0xFFFF;
-}
-
-int PycData::get32()
-{
-    return get<std::int32_t>();
-}
-
-std::int64_t PycData::get64()
-{
-    return get<std::int64_t>();
-}
+template std::uint8_t PycData::get();
+template std::int16_t PycData::get();
+template std::int32_t PycData::get();
+template std::int64_t PycData::get();
 
 int PycData::getBuffer(int bytes, void* buffer)
 {

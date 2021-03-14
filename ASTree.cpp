@@ -1,4 +1,6 @@
 #include <cstring>
+#include <exception>
+#include <sstream>
 #include "ASTree.h"
 #include "FastStack.h"
 #include "pyc_numeric.h"
@@ -32,6 +34,11 @@ static bool printClassDocstring = true;
 PycRef<ASTNode> BuildFromCode(PycRef<PycCode> code, PycModule* mod)
 {
     PycData source(code->code()->value(), code->code()->length());
+    if (!source.good()) {
+        std::ostringstream errmsg;
+        errmsg << "Cannot init PycData length " << std::hex << code->code()->length();
+        throw std::runtime_error(errmsg.str());
+    }
 
     FastStack stack((mod->majorVer() == 1) ? 20 : code->stackSize());
     stackhist_t stack_hist;
@@ -50,7 +57,7 @@ PycRef<ASTNode> BuildFromCode(PycRef<PycCode> code, PycModule* mod)
     bool need_try = false;
     bool variable_annotations = false;
 
-    while (!source.atEof()) {
+    while (!source.eof()) {
 #if defined(BLOCK_DEBUG) || defined(STACK_DEBUG)
         fprintf(stderr, "%-7d", pos);
     #ifdef STACK_DEBUG
