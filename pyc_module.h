@@ -15,12 +15,7 @@ public:
     int minorVer() const { return m_min; }
     std::string getVersionString() const;
 
-    int verCompare(int maj, int min) const
-    {
-        if (m_maj == maj)
-            return m_min - min;
-        return m_maj - maj;
-    }
+    int verCompare(int major, int minor) const;
 
     bool isUnicode() const { return m_unicode; }
 

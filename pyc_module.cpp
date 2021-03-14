@@ -61,7 +61,7 @@ PycModule::PycModule(std::filesystem::path filepath) : m_maj(-1), m_min(-1), m_u
     auto magic{ in.get32() };
     setVersion(magic);
 
-    int flags{ 0 };
+    auto flags{ 0 };
     if (verCompare(3, 7) >= 0) {
         flags = in.get32();
     }
@@ -207,11 +207,18 @@ void PycModule::setVersionHelper(int major, int minor, bool has_unicode)
 std::string PycModule::getVersionString() const
 {
     std::ostringstream ss;
-    ss << this->majorVer() << '.' << this->minorVer();
-    if (this->majorVer() < 3 && this->isUnicode()) {
+    ss << majorVer() << '.' << minorVer();
+    if (majorVer() < 3 && isUnicode()) {
         ss << " -U";
     }
     return ss.str();
+}
+
+int PycModule::verCompare(int major, int minor) const
+{
+    if (m_maj == major)
+        return m_min - minor;
+    return m_maj - major;
 }
 
 PycRef<PycString> PycModule::getIntern(int ref) const
