@@ -1,196 +1,77 @@
 #include "pyc_module.h"
-#include "pyc_module.h"
 #include "data.h"
-#include <stdexcept>
+#include <cstdint>
+#include <exception>
+#include <filesystem>
+#include <fstream>
+#include <ios>
+#include <iostream>
 #include <sstream>
+#include <string>
 
-using std::stringstream;
+enum struct PycMagic: std::uint32_t {
+    MAGIC_1_0 = 0x00999902,
+    MAGIC_1_1 = 0x00999903, /* Also covers 1.2 */
+    MAGIC_1_3 = 0x0A0D2E89,
+    MAGIC_1_4 = 0x0A0D1704,
+    MAGIC_1_5 = 0x0A0D4E99,
+    MAGIC_1_6 = 0x0A0DC4FC,
+    MAGIC_1_6_U = 0x0A0DC4FD,
 
-void PycModule::setVersion(unsigned int magic)
+    MAGIC_2_0 = 0x0A0DC687,
+    MAGIC_2_0_U = 0x0A0DC688,
+    MAGIC_2_1 = 0x0A0DEB2A,
+    MAGIC_2_1_U = 0x0A0DEB2B,
+    MAGIC_2_2 = 0x0A0DED2D,
+    MAGIC_2_2_U = 0x0A0DED2E,
+    MAGIC_2_3 = 0x0A0DF23B,
+    MAGIC_2_3_U = 0x0A0DF23C,
+    MAGIC_2_4 = 0x0A0DF26D,
+    MAGIC_2_4_U = 0x0A0DF26E,
+    MAGIC_2_5 = 0x0A0DF2B3,
+    MAGIC_2_5_U = 0x0A0DF2B4,
+    MAGIC_2_6 = 0x0A0DF2D1,
+    MAGIC_2_6_U = 0x0A0DF2D2,
+    MAGIC_2_7 = 0x0A0DF303,
+    MAGIC_2_7_U = 0x0A0DF304,
+
+    MAGIC_3_0 = 0x0A0D0C3A,
+    MAGIC_3_0_U = 0x0A0D0C3B,
+    MAGIC_3_1 = 0x0A0D0C4E,
+    MAGIC_3_1_U = 0x0A0D0C4F,
+    MAGIC_3_2 = 0x0A0D0C6C,
+    MAGIC_3_3 = 0x0A0D0C9E,
+    MAGIC_3_4 = 0x0A0D0CEE,
+    MAGIC_3_5 = 0x0A0D0D16,
+    MAGIC_3_5_3 = 0x0A0D0D17,
+    MAGIC_3_6 = 0x0A0D0D33,
+    MAGIC_3_7 = 0x0A0D0D42,
+    MAGIC_3_8 = 0x0A0D0D55,
+    MAGIC_3_9 = 0x0A0D0D61,
+};
+
+PycModule::PycModule(std::filesystem::path filepath) : m_maj(-1), m_min(-1), m_unicode(false)
 {
-    // Default for versions that don't support unicode selection
-    m_unicode = false;
-
-    switch (magic) {
-    case MAGIC_1_0:
-        m_maj = 1;
-        m_min = 0;
-        break;
-    case MAGIC_1_1:
-        m_maj = 1;
-        m_min = 1;
-        break;
-    case MAGIC_1_3:
-        m_maj = 1;
-        m_min = 3;
-        break;
-    case MAGIC_1_4:
-        m_maj = 1;
-        m_min = 4;
-        break;
-    case MAGIC_1_5:
-        m_maj = 1;
-        m_min = 5;
-        break;
-
-    /* Starting with 1.6, Python adds +1 for unicode mode (-U) */
-    case MAGIC_1_6+1:
-        m_unicode = true;
-        /* Fall through */
-    case MAGIC_1_6:
-        m_maj = 1;
-        m_min = 6;
-        break;
-    case MAGIC_2_0+1:
-        m_unicode = true;
-        /* Fall through */
-    case MAGIC_2_0:
-        m_maj = 2;
-        m_min = 0;
-        break;
-    case MAGIC_2_1+1:
-        m_unicode = true;
-        /* Fall through */
-    case MAGIC_2_1:
-        m_maj = 2;
-        m_min = 1;
-        break;
-    case MAGIC_2_2+1:
-        m_unicode = true;
-        /* Fall through */
-    case MAGIC_2_2:
-        m_maj = 2;
-        m_min = 2;
-        break;
-    case MAGIC_2_3+1:
-        m_unicode = true;
-        /* Fall through */
-    case MAGIC_2_3:
-        m_maj = 2;
-        m_min = 3;
-        break;
-    case MAGIC_2_4+1:
-        m_unicode = true;
-        /* Fall through */
-    case MAGIC_2_4:
-        m_maj = 2;
-        m_min = 4;
-        break;
-    case MAGIC_2_5+1:
-        m_unicode = true;
-        /* Fall through */
-    case MAGIC_2_5:
-        m_maj = 2;
-        m_min = 5;
-        break;
-    case MAGIC_2_6+1:
-        m_unicode = true;
-        /* Fall through */
-    case MAGIC_2_6:
-        m_maj = 2;
-        m_min = 6;
-        break;
-    case MAGIC_2_7+1:
-        m_unicode = true;
-        /* Fall through */
-    case MAGIC_2_7:
-        m_maj = 2;
-        m_min = 7;
-        break;
-
-    /* 3.0 and above are always unicode */
-    case MAGIC_3_0+1:
-        m_maj = 3;
-        m_min = 0;
-        m_unicode = true;
-        break;
-    case MAGIC_3_1+1:
-        m_maj = 3;
-        m_min = 1;
-        m_unicode = true;
-        break;
-
-    /* 3.2 stops using the unicode increment */
-    case MAGIC_3_2:
-        m_maj = 3;
-        m_min = 2;
-        m_unicode = true;
-        break;
-
-    case MAGIC_3_3:
-        m_maj = 3;
-        m_min = 3;
-        m_unicode = true;
-        break;
-
-    case MAGIC_3_4:
-        m_maj = 3;
-        m_min = 4;
-        m_unicode = true;
-        break;
-
-    case MAGIC_3_5:
-        /* fall through */
-
-    case MAGIC_3_5_3:
-        m_maj = 3;
-        m_min = 5;
-        m_unicode = true;
-        break;
-
-    case MAGIC_3_6:
-        m_maj = 3;
-        m_min = 6;
-        m_unicode = true;
-        break;
-
-    case MAGIC_3_7:
-        m_maj = 3;
-        m_min = 7;
-        m_unicode = true;
-        break;
-
-    case MAGIC_3_8:
-        m_maj = 3;
-        m_min = 8;
-        m_unicode = true;
-        break;
-
-    case MAGIC_3_9:
-        m_maj = 3;
-        m_min = 9;
-        m_unicode = true;
-        break;
-
-    /* Bad Magic detected */
-    default:
-        m_maj = -1;
-        m_min = -1;
-    }
-}
-
-void PycModule::loadFromFile(const char* filename)
-{
-    PycFile in(filename);
+    PycFile in(filepath.string().c_str());
     if (!in.isOpen()) {
-        fprintf(stderr, "Error opening file %s\n", filename);
-        return;
+        std::ostringstream errmsg;
+        errmsg << "Error opening file " << filepath;
+        throw std::invalid_argument(errmsg.str());
     }
-    setVersion(in.get32());
-    if (!isValid()) {
-        fputs("Bad MAGIC!\n", stderr);
-        return;
-    }
+    auto magic{ in.get32() };
+    setVersion(magic);
 
-    int flags = 0;
-    if (verCompare(3, 7) >= 0)
+    int flags{ 0 };
+    if (verCompare(3, 7) >= 0) {
         flags = in.get32();
+    }
 
     if (flags & 0x1) {
         // Optional checksum added in Python 3.7
         in.get32();
         in.get32();
-    } else {
+    }
+    else {
         in.get32(); // Timestamp -- who cares?
 
         if (verCompare(3, 3) >= 0)
@@ -200,9 +81,132 @@ void PycModule::loadFromFile(const char* filename)
     m_code = LoadObject(&in, this).require_cast<PycCode>();
 }
 
-string PycModule::getVersionString() const
+void PycModule::setVersion(unsigned int magic)
 {
-    stringstream ss;
+    /* Starting with 1.6, Python adds +1 for unicode mode (-U)
+       3.0 and above are always unicode
+       3.2 stops using the unicode increment
+    */
+    switch (PycMagic(magic)) {
+    case PycMagic::MAGIC_1_0:
+        setVersionHelper(1, 0, false);
+        break;
+    case PycMagic::MAGIC_1_1:
+        setVersionHelper(1, 1, false);
+        break;
+    case PycMagic::MAGIC_1_3:
+        setVersionHelper(1, 3, false);
+        break;
+    case PycMagic::MAGIC_1_4:
+        setVersionHelper(1, 4, false);
+        break;
+    case PycMagic::MAGIC_1_5:
+        setVersionHelper(1, 5, false);
+        break;
+    case PycMagic::MAGIC_1_6:
+        setVersionHelper(1, 6, false);
+        break;
+    case PycMagic::MAGIC_1_6_U:
+        setVersionHelper(1, 6, true);
+        break;
+    case PycMagic::MAGIC_2_0:
+        setVersionHelper(2, 0, false);
+        break;
+    case PycMagic::MAGIC_2_0_U:
+        setVersionHelper(2, 0, true);
+        break;
+    case PycMagic::MAGIC_2_1:
+        setVersionHelper(2, 1, false);
+        break;
+    case PycMagic::MAGIC_2_1_U:
+        setVersionHelper(2, 1, true);
+        break;
+    case PycMagic::MAGIC_2_2:
+        setVersionHelper(2, 2, false);
+        break;
+    case PycMagic::MAGIC_2_2_U:
+        setVersionHelper(2, 2, true);
+        break;
+    case PycMagic::MAGIC_2_3:
+        setVersionHelper(2, 3, false);
+        break;
+    case PycMagic::MAGIC_2_3_U:
+        setVersionHelper(2, 3, true);
+        break;
+    case PycMagic::MAGIC_2_4:
+        setVersionHelper(2, 4, false);
+        break;
+    case PycMagic::MAGIC_2_4_U:
+        setVersionHelper(2, 4, true);
+        break;
+    case PycMagic::MAGIC_2_5:
+        setVersionHelper(2, 5, false);
+        break;
+    case PycMagic::MAGIC_2_5_U:
+        setVersionHelper(2, 5, true);
+        break;
+    case PycMagic::MAGIC_2_6:
+        setVersionHelper(2, 6, false);
+        break;
+    case PycMagic::MAGIC_2_6_U:
+        setVersionHelper(2, 6, true);
+        break;
+    case PycMagic::MAGIC_2_7:
+        setVersionHelper(2, 7, false);
+        break;
+    case PycMagic::MAGIC_2_7_U:
+        setVersionHelper(2, 7, true);
+        break;
+    case PycMagic::MAGIC_3_0_U:
+        setVersionHelper(3, 0, true);
+        break;
+    case PycMagic::MAGIC_3_1_U:
+        setVersionHelper(3, 1, true);
+        break;
+    case PycMagic::MAGIC_3_2:
+        setVersionHelper(3, 2, true);
+        break;
+    case PycMagic::MAGIC_3_3:
+        setVersionHelper(3, 3, true);
+        break;
+    case PycMagic::MAGIC_3_4:
+        setVersionHelper(3, 4, true);
+        break;
+    case PycMagic::MAGIC_3_5:
+        setVersionHelper(3, 5, true);
+        break;
+    case PycMagic::MAGIC_3_5_3:
+        setVersionHelper(3, 5, true);
+        break;
+    case PycMagic::MAGIC_3_6:
+        setVersionHelper(3, 6, true);
+        break;
+    case PycMagic::MAGIC_3_7:
+        setVersionHelper(3, 7, true);
+        break;
+    case PycMagic::MAGIC_3_8:
+        setVersionHelper(3, 8, true);
+        break;
+    case PycMagic::MAGIC_3_9:
+        setVersionHelper(3, 9, true);
+        break;
+    default:
+        std::ostringstream errmsg;
+        errmsg << "Bad MAGIC " << std::hex << magic;
+        throw std::invalid_argument(errmsg.str());
+    }
+}
+
+void PycModule::setVersionHelper(int major, int minor, bool has_unicode)
+{
+    m_maj = major;
+    m_min = minor;
+    m_unicode = has_unicode;
+}
+
+std::string PycModule::getVersionString() const
+{
+    std::ostringstream ss;
     ss << this->majorVer() << '.' << this->minorVer();
     if (this->majorVer() < 3 && this->isUnicode()) {
         ss << " -U";

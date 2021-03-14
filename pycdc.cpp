@@ -1,39 +1,26 @@
 #include <cstring>
+#include <exception>
 #include <filesystem>
 #include <iostream>
 #include "ASTree.h"
 
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::filesystem::path;
-
 int main(int argc, char* argv[])
 {
     if (argc < 2) {
-        cerr << "No input file specified" << endl;
+        std::cerr << "No input file specified" << std::endl;
         return 1;
     }
-    path filepath{ argv[1] };
-    PycModule mod;
-    try {
-        mod.loadFromFile(filepath.string().c_str());
-    } catch (std::exception& ex) {
-        cerr << "Error loading file " << filepath.string() << ": " << ex.what() << endl;
-        return 1;
-    }
-    if (!mod.isValid()) {
-        cerr << "Could not load file " << filepath.string() << endl;
-        return 1;
-    }
-    cout << "# Source Generated with Decompyle++" << endl;
-    cout << "# File: " << filepath.filename() << " (Python " << mod.getVersionString() << ")" << endl << endl;
-    try {
-        decompyle(mod.code(), &mod);
-    } catch (std::exception& ex) {
-        cerr << "Error decompyling " << filepath.string() << ": " << ex.what() << endl;
-        return 1;
-    }
+    std::filesystem::path filepath{ argv[1] };
 
+    try {
+        PycModule mod(filepath);
+        std::cout << "# Source Generated with Decompyle++" << std::endl;
+        std::cout << "# File: " << filepath.filename() << " (Python " << mod.getVersionString() << ")" << std::endl << std::endl;
+        decompyle(mod.code(), &mod);
+    }
+    catch (std::exception& ex) {
+        std::cerr << "Error processing file " << filepath.string() << ":" << std::endl << ex.what() << std::endl;
+        return 1;
+    }
     return 0;
 }

@@ -7,11 +7,6 @@
 #include "pyc_numeric.h"
 #include "bytecode.h"
 
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::filesystem::path;
-
 static const char* flag_names[] = {
     "CO_OPTIMIZED", "CO_NEWLOCALS", "CO_VARARGS", "CO_VARKEYWORDS",
     "CO_NESTED", "CO_GENERATOR", "CO_NOFREE", "CO_COROUTINE",
@@ -233,28 +228,17 @@ void output_object(PycRef<PycObject> obj, PycModule* mod, int indent)
 int main(int argc, char* argv[])
 {
     if (argc < 2) {
-        cerr << "No input file specified" << endl;
+        std::cerr << "No input file specified" << std::endl;
         return 1;
     }
-    path filepath{ argv[1] };
-    PycModule mod;
+    std::filesystem::path filepath{ argv[1] };
     try {
-        mod.loadFromFile(filepath.string().c_str());
-    } catch (std::exception& ex) {
-        cerr << "Error loading file " << filepath.string() << ": " << ex.what() << endl;
-        return 1;
-    }
-    if (!mod.isValid()) {
-        cerr << "Could not load file " << filepath.string() << endl;
-        return 1;
-    }
-    cout << filepath.filename() << " (Python " << mod.getVersionString() << ")" << endl << endl;
-    try {
+        PycModule mod(filepath);
+        std::cout << filepath.filename() << " (Python " << mod.getVersionString() << ")" << std::endl << std::endl;
         output_object(mod.code().cast<PycObject>(), &mod, 0);
     } catch (std::exception& ex) {
-        cerr << "Error disassembling " << filepath.string() << ": " << ex.what() << endl;
+        std::cerr << "Error processing file " << filepath.string() << ":" << std::endl << ex.what() << std::endl;
         return 1;
     }
-
     return 0;
 }
