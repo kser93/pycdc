@@ -304,7 +304,7 @@ void print_const(PycRef<PycObject> obj, PycModule* mod, const char* parent_f_str
     }
 }
 
-void bc_next(PycBuffer& source, PycModule* mod, int& opcode, int& operand, int& pos)
+void bc_next(PycData& source, PycModule* mod, int& opcode, int& operand, int& pos)
 {
     opcode = Pyc::ByteToOpcode(mod->majorVer(), mod->minorVer(), source.getByte());
     bool py36_opcode = (mod->majorVer() > 3 || (mod->majorVer() == 3 && mod->minorVer() >= 6));
@@ -342,15 +342,15 @@ void bc_disasm(PycRef<PycCode> code, PycModule* mod, int indent)
     };
     static const size_t cmp_strings_len = sizeof(cmp_strings) / sizeof(cmp_strings[0]);
 
-    PycBuffer source(code->code()->value(), code->code()->length());
+    PycData source(code->code()->value(), code->code()->length());
 
-    int opcode, operand;
-    int pos = 0;
+    int opcode{ 0 };
+    int operand{ 0 };
+    int pos{ 0 };
     while (!source.atEof()) {
         for (int i=0; i<indent; i++)
             fputs("    ", pyc_output);
         fprintf(pyc_output, "%-7d ", pos);   // Current bytecode position
-
         bc_next(source, mod, opcode, operand, pos);
         fprintf(pyc_output, "%-24s", Pyc::OpcodeName(opcode));
 

@@ -52,13 +52,15 @@ enum struct PycMagic: std::uint32_t {
 
 PycModule::PycModule(std::filesystem::path filepath) : m_maj(-1), m_min(-1), m_unicode(false)
 {
-    PycFile in(filepath);
+    PycData in(filepath);
+    //PycFile in(filepath);
     if (!in.isOpen()) {
         std::ostringstream errmsg;
         errmsg << "Error opening file " << filepath;
         throw std::invalid_argument(errmsg.str());
     }
     auto magic{ in.get32() };
+    std::cout << std::hex << magic << std::endl;
     setVersion(magic);
 
     auto flags{ 0 };

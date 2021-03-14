@@ -31,7 +31,8 @@ static bool printClassDocstring = true;
 
 PycRef<ASTNode> BuildFromCode(PycRef<PycCode> code, PycModule* mod)
 {
-    PycBuffer source(code->code()->value(), code->code()->length());
+    auto ccc{ code->code() };
+    PycData source(code->code()->value(), code->code()->length());
 
     FastStack stack((mod->majorVer() == 1) ? 20 : code->stackSize());
     stackhist_t stack_hist;
