@@ -52,7 +52,7 @@ enum struct PycMagic: std::uint32_t {
 
 PycModule::PycModule(std::filesystem::path filepath) : m_maj(-1), m_min(-1), m_unicode(false)
 {
-    PycFile in(filepath.string().c_str());
+    PycFile in(filepath);
     if (!in.isOpen()) {
         std::ostringstream errmsg;
         errmsg << "Error opening file " << filepath;
